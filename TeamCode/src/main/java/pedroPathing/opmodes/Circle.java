@@ -1,4 +1,4 @@
-package pedroPathing.examples;
+package pedroPathing.opmodes;
 
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;

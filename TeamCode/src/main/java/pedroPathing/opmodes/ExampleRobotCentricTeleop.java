@@ -1,6 +1,4 @@
-package pedroPathing.examples;
-
-import android.provider.SyncStateContract;
+package pedroPathing.opmodes;
 
 import com.pedropathing.follower.Follower;
 import com.pedropathing.localization.Pose;

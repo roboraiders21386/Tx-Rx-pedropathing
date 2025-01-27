@@ -1,4 +1,4 @@
-package pedroPathing.examples;
+package pedroPathing.opmodes;
 
 import com.pedropathing.follower.Follower;
 import com.pedropathing.localization.Pose;
