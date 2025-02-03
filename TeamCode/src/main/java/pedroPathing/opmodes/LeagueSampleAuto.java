@@ -28,8 +28,8 @@ import pedroPathing.constants.LConstants;
  * @version 2.0, 11/28/2024
  */
 
-@Autonomous(name = "Meet 3 Sample Auto", group = "Examples")
-public class SampleAutoM3 extends OpMode {
+@Autonomous(name = "Auton Left Sample", group = "Examples")
+public class LeagueSampleAuto extends OpMode {
     private Follower follower;
     private Timer pathTimer, actionTimer, opmodeTimer, sleepTimer;
 
@@ -54,16 +54,16 @@ public class SampleAutoM3 extends OpMode {
     private final Pose startPose = new Pose(9, 111, Math.toRadians(270));
 
     /** Scoring Pose of our robot. It is facing the submersible at a -45 degree (315 degree) angle. */
-    private final Pose scorePose = new Pose(17, 129, Math.toRadians(315));
+    private final Pose scorePose = new Pose(17, 127, Math.toRadians(315));
 
     /** Lowest (First) Sample from the Spike Mark */
-    private final Pose pickup1Pose = new Pose(31.5, 123.25, Math.toRadians(0));
+    private final Pose pickup1Pose = new Pose(30.5, 123.5, Math.toRadians(0));
 
     /** Middle (Second) Sample from the Spike Mark */
-    private final Pose pickup2Pose = new Pose(31.5, 133, Math.toRadians(0));
+    private final Pose pickup2Pose = new Pose(30.5, 133, Math.toRadians(0));
 
     /** Highest (Third) Sample from the Spike Mark */
-    private final Pose pickup3Pose = new Pose(38, 133.5, Math.toRadians(45));
+    private final Pose pickup3Pose = new Pose(44, 129, Math.toRadians(90));
 
     /** Park Pose for our robot, after we do all of the scoring. */
     private final Pose parkPose = new Pose(63, 98, Math.toRadians(270));
@@ -74,8 +74,8 @@ public class SampleAutoM3 extends OpMode {
 
     /* These are our Paths and PathChains that we will define in buildPaths() */
     private Path scorePreload, park;
-    private double rotPos = 0.17, rotPick = 0.34, rotDelta = 0.05, rotWait = 3*rotDelta;
-    private double wristScore = 0, wristPick = 1, wristSpecial = (wristScore*3+wristPick)/4.0;
+    private double rotPos = 0.17, rotPick = 0.39, rotDelta = 0.05, rotWait = 3*rotDelta;
+    private double wristScore = 0, wristPick = 0.9, wristSpecial = (wristScore*3+wristPick)/4.0, wristPick4 = 0.75;
     private double closeClaw = 0, openClaw = 0.3;
     private double grabDelay = 0.75, scoreDelay = 0.75;
 
@@ -191,11 +191,17 @@ public class SampleAutoM3 extends OpMode {
             case 13:
                 if (pathTimer.getElapsedTimeSeconds()>grabDelay) {
                     Sample.setPosition(closeClaw);
+                    setPathState(19);
+                }
+                break;
+            case 19:
+                if(pathTimer.getElapsedTimeSeconds()>grabDelay-0.25) {
                     Rotation.setPosition(rotPos);
                     score();
-                    follower.followPath(scorePickup1,true);
+                    follower.followPath(scorePickup1, true);
                     setPathState(4);
                 }
+                break;
             case 4:
                 if (!follower.isBusy() && !Lift.isBusy() && !Lift2.isBusy() && Rotation.getPosition()<rotPos+rotWait && Lift.getCurrentPosition()>2500) {
                     Wrist.setPosition(wristScore);
@@ -241,34 +247,31 @@ public class SampleAutoM3 extends OpMode {
                     Rotation.setPosition(rotPick-rotDelta);
                     Wrist.setPosition(wristPick);
                     comeBack();
-                    swap.setPosition(0.25);
-                    setPathState(50);
-                }
-                break;
-            case 50:
-                if (!follower.isBusy() && !Lift.isBusy() && !Lift2.isBusy() && Rotation.getPosition()>rotPick-rotWait && Lift.getCurrentPosition()<500) {
-                    follower.followPath(grabPickup3,true);
+                    follower.followPath(grabPickup3, true);
+                    swap.setPosition(0);
                     setPathState(9);
                 }
                 break;
             case 9:
                 if (!follower.isBusy() && !Lift.isBusy() && !Lift2.isBusy() && Rotation.getPosition()>rotPick-rotWait && Lift.getCurrentPosition()<500) {
-                    Rotation.setPosition(rotPick);
+                    Rotation.setPosition(rotPick+0.02);
                     setPathState(15);
                 }
                 //sleep(5);
                 break;
             case 15:
-                if (pathTimer.getElapsedTimeSeconds()>grabDelay) {
-                    Sample.setPosition(closeClaw);
+                if (pathTimer.getElapsedTimeSeconds()>grabDelay+0.2) {
                     Rotation.setPosition(rotPos);
                     score();
-                    swap.setPosition(0.4);
-                    follower.followPath(scorePickup3,true);
+                    follower.followPath(scorePickup3, true);
                     setPathState(10);
+                }
+                else if (pathTimer.getElapsedTimeSeconds()>grabDelay-0.2) {
+                    Sample.setPosition(closeClaw);
                 }
             case 10:
                 if (!follower.isBusy() && !Lift.isBusy() && !Lift2.isBusy() && Rotation.getPosition()<rotPos+rotWait && Lift.getCurrentPosition()>2500) {
+                    swap.setPosition(0.4);
                     Wrist.setPosition(wristScore);
                     setPathState(11);
                 }
@@ -277,7 +280,8 @@ public class SampleAutoM3 extends OpMode {
                 condition = Wrist.getPosition()<wristScore+0.2;
                 if (pathTimer.getElapsedTimeSeconds()>scoreDelay) {
                     Sample.setPosition(openClaw);
-                    Rotation.setPosition(rotPos+0.035);
+                    Rotation.setPosition(rotPos+0.1);
+                    Sample.setPosition(0);
                     Wrist.setPosition(wristSpecial);
                     comeBack();
                     follower.followPath(park, false);
@@ -400,3 +404,4 @@ public class SampleAutoM3 extends OpMode {
         while (sleepTimer.getElapsedTimeSeconds()<x) x=x;
     }
 }
+

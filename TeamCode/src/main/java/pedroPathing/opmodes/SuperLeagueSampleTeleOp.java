@@ -1,14 +1,14 @@
 package pedroPathing.opmodes;
-
 import com.pedropathing.follower.Follower;
 import com.pedropathing.localization.Pose;
 import com.pedropathing.util.Constants;
 import com.pedropathing.util.Timer;
-import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import  com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 import pedroPathing.constants.FConstants;
 import pedroPathing.constants.LConstants;
@@ -17,23 +17,24 @@ import pedroPathing.constants.LConstants;
  * This is an example teleop that showcases movement and robot-centric driving.
  *
  * @author Baron Henderson - 20077 The Indubitables
- * @author Arnav Doshi - 21386 Tx-Rx
  * @version 2.0, 12/30/2024
  */
 
-@TeleOp(name = "SpecimenM3", group = "Examples")
-public class SpecimenM3 extends OpMode {
+@TeleOp(name = "SuperLeagueSampleTeleop", group = "TeleOp")
+public class SuperLeagueSampleTeleOp extends OpMode{
     private Follower follower;
-    private Timer pathTimer;
     private final Pose startPose = new Pose(0,0,0);
+    private Timer pathTimer;
     private DcMotor Lift;
     private DcMotor Lift2;
+    private DcMotor RF;
+    private DcMotor LF;
+    private DcMotor RB;
+    private DcMotor LB;
     private Servo Sample;
     private Servo Rotation;
     private Servo Wrist;
     private Servo swap;
-    //private DcMotor rig1; //right - motor port 0
-    //private DcMotor rig2; //left - motor port 1
     private double dp = 1;
     private double intPow = 0.5;
     private double liftPow = 1;
@@ -47,20 +48,30 @@ public class SpecimenM3 extends OpMode {
     private int swapcnt = 0;
     private int score = 0;
     private int pick = 0;
-    private double rotPos = 0.17, rotPick = 0.34, rotDelta = 0.05, rotWait = 0.3;
-    private double wristScore = 0, wristPick = 1, wristSpecial = (wristScore*3+wristPick)/4.0;
-    private double closeClaw = 0, openClaw = 0.3;
-    private double rotSpec = 0.1, wristSpecPick = 0.3;
+    private double rotPos = 0.17, rotPick = 0.37, rotDelta = 0.05, rotWait = 0.3;
+    private double wristScore = 0, wristPick = 0.9, wristSpecial = (wristScore*3+wristPick)/4.0;
+    private double closeClaw = 0, openClaw = 0.3, wristSpecPick = 0.3;
+    private double rotSpec = 0.1;
     private DcMotor rig1;
     private DcMotor rig2;
+
+
+
     /** This method is call once when init is played, it initializes the follower **/
     @Override
     public void init() {
         Constants.setConstants(FConstants.class, LConstants.class);
         follower = new Follower(hardwareMap);
         follower.setStartingPose(startPose);
-        follower.setMaxPower(0.75);
         pathTimer = new Timer();
+        RF = hardwareMap.get(DcMotor.class, "RF");
+        LF = hardwareMap.get(DcMotor.class, "LF");
+        RB = hardwareMap.get(DcMotor.class, "RB");
+        LB = hardwareMap.get(DcMotor.class, "LB");
+        LF.setDirection(DcMotorSimple.Direction.FORWARD);
+        RF.setDirection(DcMotorSimple.Direction.REVERSE);
+        LB.setDirection(DcMotorSimple.Direction.FORWARD);
+        RB.setDirection(DcMotorSimple.Direction.REVERSE);
         rig1 = hardwareMap.get(DcMotor.class, "rig1");
         rig2 = hardwareMap.get(DcMotor.class, "rig2");
         Lift = hardwareMap.get(DcMotor.class, "lift");
@@ -84,18 +95,6 @@ public class SpecimenM3 extends OpMode {
         ServoPosition = 1;
         ServoSpeed = 1;*/
         int clawUse = 0;
-    }
-
-    /** This method is called continuously after Init while waiting to be started. **/
-    @Override
-    public void init_loop() {
-    }
-
-    /** This method is called once at the start of the OpMode. **/
-    @Override
-    public void start() {
-
-        follower.startTeleopDrive();
         Lift.setTargetPosition(0);
         Lift.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         Lift.setPower(liftPow);
@@ -106,6 +105,18 @@ public class SpecimenM3 extends OpMode {
 
         Rotation.setPosition(0.1+rotCor);
         Sample.setPosition(0);
+        swap.setPosition(0.4);
+    }
+
+    /** This method is called continuously after Init while waiting to be started. **/
+    @Override
+    public void init_loop() {
+    }
+
+    /** This method is called once at the start of the OpMode. **/
+    @Override
+    public void start() {
+        follower.startTeleopDrive();
     }
 
     /** This is the main loop of the opmode and runs continuously after play **/
@@ -119,7 +130,7 @@ public class SpecimenM3 extends OpMode {
         - Robot-Centric Mode: true
         */
 
-        follower.setTeleOpMovementVectors(-gamepad1.left_stick_y, -gamepad1.left_stick_x, -gamepad1.right_stick_x, true);
+        follower.setTeleOpMovementVectors(gamepad1.left_stick_y, gamepad1.left_stick_x, gamepad1.right_stick_x, true);
         follower.update();
 
         /* Telemetry Outputs of our Follower */
@@ -132,27 +143,31 @@ public class SpecimenM3 extends OpMode {
         telemetry.addData("Sample claw position:", Sample.getPosition());
         telemetry.addData("Wrist position:", Wrist.getPosition());
         telemetry.addData("Rig1 position", rig1.getCurrentPosition());
+        telemetry.addData("Swap position", swap.getPosition());
+
+        /* Update Telemetry to the Driver Hub */
+        telemetry.update();
+
         //StartIntake
         if (!gamepad1.start && gamepad1.right_bumper) {
-            if (sampcnt%2==0) Sample.setPosition(openClaw);
-            else Sample.setPosition(closeClaw);
+            if (sampcnt%2==0) Sample.setPosition(0.33);
+            else Sample.setPosition(0);
             sampcnt++;
-            sleep(1000);
+            sleep(500);
         }
         if (!gamepad1.start && gamepad1.left_bumper) {
-            if (swapcnt%2==0) swap.setPosition(0.9);
+            if (swapcnt%2==0) swap.setPosition(0);
             else swap.setPosition(0.4);
             swapcnt++;
             sleep(500);
-            telemetry.addData("Swap Position: ", swap.getPosition());
         }
-        if (gamepad1.left_trigger>0) {
+        while (gamepad1.left_trigger>0) {
             Wrist.setPosition(0);
         }
-        if (gamepad1.right_trigger>0) {
-            Wrist.setPosition(1);
+        while (gamepad1.right_trigger>0) {
+            Wrist.setPosition(0.9);
         }
-        if (gamepad1.options && gamepad1.dpad_down) { //low specimen
+        if (gamepad1.options && gamepad1.dpad_down) {
             //score specimen low
             Rotation.setPosition(0.24+rotCor);//0.21
             telemetry.addData("Rotate", "set to 0.24");
@@ -163,10 +178,10 @@ public class SpecimenM3 extends OpMode {
             //Grab Position
             Wrist.setPosition(wristPick);
             //Sample.setPosition(0.3);
-            Rotation.setPosition(rotPick+0.01);//0.33);
+            Rotation.setPosition(rotPick+0.05);//0.33);
             sleep(300);
             Sample.setPosition(closeClaw);
-            Rotation.setPosition(rotWait);
+            Rotation.setPosition(rotPick-0.002);
             telemetry.addData("Rotate", "set to 1");
         }
         else if (!gamepad1.options && gamepad1.dpad_down) {
@@ -177,48 +192,51 @@ public class SpecimenM3 extends OpMode {
             // sleep(300);
             //Intake.setPosition(0.3);
         }
-
         if (!gamepad1.options && gamepad1.dpad_right) {
-
-            Lift.setTargetPosition(260);
-            Lift.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            Lift.setPower(liftPow);
-            Lift2.setTargetPosition(260);
-            Lift2.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            Lift2.setPower(liftPow);
-            Rotation.setPosition(rotSpec);
-            Wrist.setPosition(wristSpecPick);
-            Sample.setPosition(openClaw);
-            telemetry.addData("Rotate", "set to 0.04");
+            if (pick%2==0) {
+                Lift.setTargetPosition(0);
+                Lift.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                Lift.setPower(liftPow);
+                Lift2.setTargetPosition(0);
+                Lift2.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                Lift2.setPower(liftPow);
+                Rotation.setPosition(rotSpec);
+                Wrist.setPosition(wristSpecPick);
+                Sample.setPosition(openClaw);
+                telemetry.addData("Rotate", "set to 0.04");
+            } else {
+                Sample.setPosition(closeClaw);
+            }
             pick++;
+            sleep(250);
             //Pick Up Specimen from Human Player
 
-        } else if (!gamepad1.options && gamepad1.dpad_left) {
-            //Midway position
-            if (leftcnt%2==0) {
-                Rotation.setPosition(rotWait);
-                Wrist.setPosition(wristPick);
-                telemetry.addData("Rotate", "set to 0.3");
-            } else {
-                Rotation.setPosition(rotWait+0.01);
-            }
-            leftcnt++;
-            sleep(250);
         }
-
+        if (!gamepad1.options && gamepad1.dpad_left) {
+            //Midway position
+            Lift.setTargetPosition(0);
+            Lift.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            Lift.setPower(liftPow);
+            Lift2.setTargetPosition(0);
+            Lift2.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            Lift2.setPower(liftPow);
+            Rotation.setPosition(rotPick-0.0017);
+            Wrist.setPosition(wristPick);
+            telemetry.addData("Rotate", "set to 0.3");
+        }
         if (gamepad1.options && gamepad1.dpad_left) {
             //Decremtal
-            Rotation.setPosition(Rotation.getPosition()-rotDelta);
+            Rotation.setPosition(Rotation.getPosition()-0.025);
             sleep(500);
         }
         if (gamepad1.options && gamepad1.dpad_right) {
             //Incremental
-            Rotation.setPosition(Rotation.getPosition()+rotDelta);
+            Rotation.setPosition(Rotation.getPosition()+0.025);
             sleep(500);
         }
         if (!gamepad1.share && gamepad1.cross) {
             //Align Straight and go down
-            Rotation.setPosition(0.2);
+            Rotation.setPosition(rotPick-0.0017);
             Wrist.setPosition(wristPick);
             Lift.setTargetPosition(0);
             Lift.setMode(DcMotor.RunMode.RUN_TO_POSITION);
@@ -257,15 +275,20 @@ public class SpecimenM3 extends OpMode {
             sleep(500);
 
         }
-        if (gamepad1.share && gamepad1.triangle) {
-            Wrist.setPosition((wristPick+wristScore)/2);
-            Rotation.setPosition(rotPos);
-            Lift.setTargetPosition(3080);//To be updated, Belt is loose
+
+        if (!gamepad1.share && gamepad1.triangle) {
+            Lift.setTargetPosition(3974);//To be updated, Belt is loose
             Lift.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             Lift.setPower(liftPow);
-            Lift2.setTargetPosition(3080);//To be updated, Belt is loose
+            Lift2.setTargetPosition(3974);//To be updated, Belt is loose
             Lift2.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             Lift2.setPower(liftPow);
+            sleep(300);
+            if (Lift.getCurrentPosition() > 3000 && Lift2.getCurrentPosition() > 3000){
+                Rotation.setPosition(rotPos);
+                sleep(300);
+                Wrist.setPosition(wristPick/2);
+            }
             //while (Lift.isBusy() && Lift2.isBusy()) {
             telemetry.addData("Current Position Lift: ", Lift.getCurrentPosition());
             telemetry.addData("Target Position Lift: ", Lift.getTargetPosition());
@@ -309,7 +332,6 @@ public class SpecimenM3 extends OpMode {
             rig1.setPower(1);
             rig2.setPower(1);
         }
-
         if (gamepad1.circle){
             Lift.setTargetPosition(Lift.getCurrentPosition()+100);
             Lift2.setTargetPosition(Lift2.getCurrentPosition()+100);
@@ -318,21 +340,19 @@ public class SpecimenM3 extends OpMode {
             telemetry.addData("Current Pos Lift: ", Lift.getCurrentPosition());
             telemetry.addData("Current Pos Lift2: ", Lift2.getCurrentPosition());
         }
-        if  (!gamepad1.share && gamepad1.triangle) {
+        if  (gamepad1.share && gamepad1.triangle) {
             if (score%2==0) {
-                Sample.setPosition(closeClaw);
-                sleep(300);
-                Rotation.setPosition(rotPos+0.025);
+                Wrist.setPosition(wristPick);
+                Rotation.setPosition(rotPos+0.005);
                 swap.setPosition(0.4);
                 Lift.setTargetPosition(350);
                 Lift2.setTargetPosition(350);
                 Lift.setPower(liftPow);
                 Lift2.setPower(liftPow);
-                Wrist.setPosition(wristPick);
                 telemetry.addData("Current Pos Lift: ", Lift.getCurrentPosition());
                 telemetry.addData("Current Pos Lift2: ", Lift2.getCurrentPosition());
             } else {
-                Rotation.setPosition(rotPos+0.05);
+                Rotation.setPosition(rotPos+0.02);
                 sleep(500);
                 Lift.setTargetPosition(1200);
                 Lift2.setTargetPosition(1200);
@@ -346,9 +366,14 @@ public class SpecimenM3 extends OpMode {
             score++;
             sleep(200);
         }
-        /* Update Telemetry to the Driver Hub */
         telemetry.update();
+        LF.setPower(0);
+        RF.setPower(0);
+        LB.setPower(0);
+        RB.setPower(0);
+
     }
+
     /** We do not use this because everything automatically should disable **/
     @Override
     public void stop() {
@@ -361,3 +386,4 @@ public class SpecimenM3 extends OpMode {
         }
     }
 }
+

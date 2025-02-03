@@ -56,7 +56,7 @@ public class SampleM3 extends OpMode {
     /** This method is call once when init is played, it initializes the follower **/
     @Override
     public void init() {
-        Constants.setConstants(FConstants.class,LConstants.class);
+        Constants.setConstants(FConstants.class, LConstants.class);
         follower = new Follower(hardwareMap);
         follower.setStartingPose(startPose);
         follower.setMaxPower(0.75);
@@ -119,7 +119,7 @@ public class SampleM3 extends OpMode {
         - Robot-Centric Mode: true
         */
 
-        follower.setTeleOpMovementVectors(-gamepad1.left_stick_y, -gamepad1.left_stick_x, -gamepad1.right_stick_x, true);
+        follower.setTeleOpMovementVectors(gamepad1.left_stick_y, gamepad1.left_stick_x, -gamepad1.right_stick_x, true);
         follower.update();
 
         /* Telemetry Outputs of our Follower */
@@ -264,10 +264,10 @@ public class SampleM3 extends OpMode {
         if (!gamepad1.share && gamepad1.triangle) {
             Wrist.setPosition((wristPick+wristScore)/2);
             Rotation.setPosition(rotPos);
-            Lift.setTargetPosition(3974);//To be updated, Belt is loose
+            Lift.setTargetPosition(3610);//To be updated, Belt is loose
             Lift.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             Lift.setPower(liftPow);
-            Lift2.setTargetPosition(3974);//To be updated, Belt is loose
+            Lift2.setTargetPosition(3610);//To be updated, Belt is loose
             Lift2.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             Lift2.setPower(liftPow);
             //while (Lift.isBusy() && Lift2.isBusy()) {
