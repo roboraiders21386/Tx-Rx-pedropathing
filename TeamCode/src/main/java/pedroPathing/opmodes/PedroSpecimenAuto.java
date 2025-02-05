@@ -1,6 +1,5 @@
 package pedroPathing.opmodes;
 
-import static java.lang.Thread.sleep;
 
 import com.pedropathing.follower.Follower;
 import com.pedropathing.localization.Pose;
@@ -59,12 +58,13 @@ public class PedroSpecimenAuto extends OpMode {
     private Servo swap, Wrist, Rotation, Sample;
     private DcMotor Lift, Lift2, rig1, rig2;
     private int pathState;
-    private double rotPos = 0.17, rotPick = 0.42, rotDelta = 0.05, rotWait = 3*rotDelta;
-    private double wristScore = 0, wristPick = 0.9, wristSpecial = (wristScore*3+wristPick)/4.0, wristPick4 = 0.75;
+    private double rotPos = 0.17, rotPick = 0.42, rotDelta = 0.01, rotWait = 3*rotDelta;
+    private double wristScore = 0, wristPick = 0.9, wristSpecial = (wristScore*3+wristPick)/4.0, wristPick4 = 0.75, wristSpecPick = 0.3;
     private double closeClaw = 0, openClaw = 0.3;
     private int liftScore = 1500;
-    private double grabDelay = 0.75;
-    double rotCor = 0.0075, liftPow = 0.8, rotScore = rotPos+0.067, rotBack = 0.21, rotSpec=0.3022;
+    private double grabDelay = 2;
+    double rotCor = 0.0075, liftPow = 0.65, rotScore = rotPos+0.08, rotBack = 0.21, rotSpec=0.12;
+
 
     /* Create and Define Poses + Paths
      * Poses are built with three constructors: x, y, and heading (in Radians).
@@ -79,27 +79,20 @@ public class PedroSpecimenAuto extends OpMode {
     private final Pose startPose = new Pose(9, 60, Math.toRadians(0));
 
     /** Scoring Pose of our robot. It is facing the submersible at a -45 degree (315 degree) angle. */
-    private final Pose scorePose = new Pose(38, 70, Math.toRadians(0));
+    private final Pose scorePose = new Pose(40, 75, Math.toRadians(0));
 
     /** Lowest (First) Sample from the Spike Mark */
-    private final Pose pickSamplePose = new Pose(28, 26.2, Math.toRadians(0));//pickup1pose
+    private final Pose pickSamplePose = new Pose(26.5, 27, Math.toRadians(0));//pickup1pose
     /** Lowest (First) Sample from the Spike Mark */
-    private final Pose pickSpecimenPose = new Pose(21, 24, Math.toRadians(0));//pickup1pose
-
-    /** Middle (Second) Sample from the Spike Mark */
-    private final Pose dragPose = new Pose(60, 30, Math.toRadians(180));//pickup2pose
-
-    /** Highest (Third) Sample from the Spike Mark */
-    private final Pose dragPose2 = new Pose(13, 13, Math.toRadians(180)); //pickup3pose
-
+    private final Pose pickSamplePose2 = new Pose(26.5, 17.5, Math.toRadians(0));//pickup1pose
+    /** Lowest (First) Sample from the Spike Mark */
+    private final Pose pickSpecimenPose = new Pose(18, 17, Math.toRadians(0));//pickup1pose
     /** Park Pose for our robot, after we do all of the scoring. */
-    private final Pose pickPose = new Pose(24, 23.2, Math.toRadians(180));
-
     /** Park Control Pose for our robot, this is used to manipulate the bezier curve that we will create for the parking.
      * The Robot will not go to this pose, it is used a control point for our bezier curve. */
-    private final Pose scorePose2 = new Pose(45, 68, Math.toRadians(180));
+    private final Pose scorePose2 = new Pose(40, 72, Math.toRadians(180));
     private final Pose scorePose3 = new Pose(45, 65, Math.toRadians(180));
-    private final Pose midwayPose = new Pose(37.5/2, 0, Math.toRadians(0));
+    private final Pose midwayPose = new Pose(25, 20, Math.toRadians(0));
     private final Pose parkPose = new Pose(6, 6, Math.toRadians(0));
 
     private final Pose parkControlPose = new Pose(6, 6, Math.toRadians(0));
@@ -142,38 +135,32 @@ public class PedroSpecimenAuto extends OpMode {
 
         /* This is our scorePickup1 PathChain. We are using a single path with a BezierLine, which is a straight line. */
         goToPickPose = follower.pathBuilder()
-                .addPath(new BezierLine(new Point(pickSamplePose), new Point(pickSpecimenPose)))
-                .setLinearHeadingInterpolation(pickSamplePose.getHeading(), pickSpecimenPose.getHeading())
-                .build();
-
-        /* This is our dragSample PathChain. We are using a single path with a BezierLine, which is a straight line. */
-        dragSample = follower.pathBuilder()
-                .addPath(new BezierLine(new Point(dragPose), new Point(dragPose2)))
-                .setLinearHeadingInterpolation(dragPose.getHeading(), dragPose2.getHeading())
+                .addPath(new BezierLine(new Point(pickSamplePose), new Point(pickSamplePose2)))
+                .setLinearHeadingInterpolation(pickSamplePose.getHeading(), pickSamplePose2.getHeading())
                 .build();
 
         /* This is our pickPickup2 PathChain. We are using a single path with a BezierLine, which is a straight line. */
         pickPickup2 = follower.pathBuilder()
-                .addPath(new BezierLine(new Point(dragPose2), new Point(pickPose)))
-                .setLinearHeadingInterpolation(dragPose2.getHeading(), pickPose.getHeading())
+                .addPath(new BezierLine(new Point(pickSamplePose2), new Point(pickSpecimenPose)))
+                .setLinearHeadingInterpolation(pickSamplePose2.getHeading(), pickSpecimenPose.getHeading())
                 .build();
 
         /* This is our scorePickup2 PathChain. We are using a single path with a BezierLine, which is a straight line. */
         scorePickup2 = follower.pathBuilder()
-                .addPath(new BezierLine(new Point(pickPose), new Point(scorePose2)))
-                .setLinearHeadingInterpolation(pickPose.getHeading(), scorePose2.getHeading())
+                .addPath(new BezierLine(new Point(pickSpecimenPose), new Point(scorePose2)))
+                .setLinearHeadingInterpolation(pickSpecimenPose.getHeading(), scorePose2.getHeading())
                 .build();
 
         /* This is our scorePickup3 PathChain. We are using a single path with a BezierLine, which is a straight line. */
         pickPickup3 = follower.pathBuilder()
-                .addPath(new BezierLine(new Point(scorePose2), new Point(pickPose)))
-                .setLinearHeadingInterpolation(scorePose2.getHeading(), pickPose.getHeading())
+                .addPath(new BezierLine(new Point(scorePose2), new Point(pickSpecimenPose)))
+                .setLinearHeadingInterpolation(scorePose2.getHeading(), pickSpecimenPose.getHeading())
                 .build();
 
         /* This is our scorePickup3 PathChain. We are using a single path with a BezierLine, which is a straight line. */
         scorePickup3 = follower.pathBuilder()
-                .addPath(new BezierLine(new Point(pickPose), new Point(scorePose3)))
-                .setLinearHeadingInterpolation(pickPose.getHeading(), scorePose3.getHeading())
+                .addPath(new BezierLine(new Point(pickSpecimenPose), new Point(scorePose3)))
+                .setLinearHeadingInterpolation(pickSpecimenPose.getHeading(), scorePose3.getHeading())
                 .build();
 
 
@@ -200,7 +187,7 @@ public class PedroSpecimenAuto extends OpMode {
                 }
 
                 */
-                if (!follower.isBusy() || pathTimer.getElapsedTimeSeconds()>3) {
+                if (!follower.isBusy() || pathTimer.getElapsedTimeSeconds()>1.5) {
                     score();
                     setPathState(25);
                 }
@@ -222,80 +209,84 @@ public class PedroSpecimenAuto extends OpMode {
                 break;
             case 2: //TODO: drag sample to observation zone
                 if (!follower.isBusy()) {
+                    Sample.setPosition(openClaw);
+                    Rotation.setPosition(rotPick-rotDelta);
+                    Wrist.setPosition(wristPick);
+                    setPathState(55);
+                }
+                break;
+            case 55:
+                if (pathTimer.getElapsedTimeSeconds()>1.5 && Rotation.getPosition()>rotPick-rotWait) {
                     Rotation.setPosition(rotPick);
-                    Wrist.setPosition(0);
+                    setPathState(56);
+                }
+                break;
+            case 56:
+                if (pathTimer.getElapsedTimeSeconds()>grabDelay) {
+                    Sample.setPosition(closeClaw);
                     setPathState(50);
                 }
                 break;
-            case 50:
+            case 50: //dont go to
                 if (Sample.getPosition()==closeClaw) {
                     Rotation.setPosition(rotSpec-0.02);
-                    Wrist.setPosition(0.25);
                     setPathState(3);
                     //setPathState(3);
                 }
-                else if (Rotation.getPosition()>rotPick-0.01) {
-                    Sample.setPosition(closeClaw);
-                }
                 break;
             case 3: //TODO: move to pickup specimen
-                if (Rotation.getPosition()<rotSpec) {
+                if (pathTimer.getElapsedTimeSeconds()>3) {
                     /* Since this is a pathChain, we can have Pedro hold the end point while we are grabbing the sample */
+                    Wrist.setPosition(wristSpecPick);
                     Sample.setPosition(openClaw);
-                    //setPathState(4);
+                    setPathState(57);
                 }
                 //sleep(5);
                 break;
-            case 4: //TODO: pickup specimen
-                if(pathTimer.getElapsedTimeSeconds()>1) {
-                    Sample.setPosition(closeClaw);
-                    sleep(500);
-                    Rotation.setPosition(rotPos+0.06);
-                    swap.setPosition(0.4);
-                    Lift.setTargetPosition(350);
-                    Lift2.setTargetPosition(350);
-                    Lift.setPower(liftPow);
-                    Lift2.setPower(liftPow);
+            case 57:
+                if (pathTimer.getElapsedTimeSeconds()>0.5) {
                     Wrist.setPosition(wristPick);
+                    follower.followPath(goToPickPose);
+                    Rotation.setPosition(rotPick);
                     setPathState(20);
                 }
                 break;
             case 20:
-                if (pathTimer.getElapsedTimeSeconds()>0.5){
-                follower.followPath(scorePickup2, true);
-                setPathState(15);
-            }
-            case 15:
-                if (!follower.isBusy()) {
-                    if (pathTimer.getElapsedTimeSeconds()>2){
-                        score();
-                        sleep(500);
-                        Sample.setPosition(openClaw);
-                        setPathState(5);
-                    }
+                if (pathTimer.getElapsedTimeSeconds()>3 && !follower.isBusy()){
+                    Sample.setPosition(closeClaw);
+                    Rotation.setPosition(rotSpec-0.02);
+                    setPathState(21);
                 }
                 break;
-            case 5: //todo: set rotation to scoring pose
+            case 21:
                 if (pathTimer.getElapsedTimeSeconds()>3) {
-                    //Sample.setPosition(0);
-                    Rotation.setPosition(rotBack);
-                    Wrist.setPosition(0);
-                    sleep(500);
-                    setPathState(6);
+                    Wrist.setPosition(wristSpecPick);
+                    Sample.setPosition(openClaw);
+                    Rotation.setPosition(rotSpec);
+                    follower.followPath(pickPickup2);
+                    //follower.followPath(goToPickPose);
+                    setPathState(1000);
                 }
+                break;
+            case 100:
+                if (!follower.isBusy() || pathTimer.getElapsedTimeSeconds()>3) {
+                    Sample.setPosition(closeClaw);
+                }
+
                 break;
             case 6: //todo: go to scoring pose 2
-                /* This case checks the robot's position and will wait until the robot position is close (1 inch away) from the pickup1Pose's position */
-                if(!follower.isBusy()) {
-                    follower.followPath(scorePickup2,true);
+                if(Sample.getPosition()==closeClaw || pathTimer.getElapsedTimeSeconds()>1.5) {
+
+                    follower.followPath(scorePickup2);
+                    Rotation.setPosition(0.16+rotCor); //0.1675
+                    Wrist.setPosition(wristScore);
                     setPathState(7);
                 }
-                //sleep(5);
                 break;
+
             case 7:
                 if (!follower.isBusy()){
                     score();
-                    sleep(500);
                     Sample.setPosition(0.3);
                     setPathState(8);
                 }
@@ -314,7 +305,6 @@ public class PedroSpecimenAuto extends OpMode {
                 if (pathTimer.getElapsedTimeSeconds()>1) {
                     Rotation.setPosition(rotSpec);
                     Wrist.setPosition(0.5);
-                    sleep(1000);
                     Sample.setPosition(0);
                     setPathState(5);
                 }
@@ -473,7 +463,7 @@ public class PedroSpecimenAuto extends OpMode {
 
     }
     public void comeBack() {
-       //Sample.setPosition(0.3);
+        //Sample.setPosition(0.3);
         Rotation.setPosition(0.16+rotCor);
         Wrist.setPosition(1);
         Lift.setTargetPosition(0);
@@ -491,4 +481,3 @@ public class PedroSpecimenAuto extends OpMode {
         //}
     }
 }
-

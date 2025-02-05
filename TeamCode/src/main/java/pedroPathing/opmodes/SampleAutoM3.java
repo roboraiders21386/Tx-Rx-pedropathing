@@ -196,6 +196,7 @@ public class SampleAutoM3 extends OpMode {
                     follower.followPath(scorePickup1,true);
                     setPathState(4);
                 }
+                break;
             case 4:
                 if (!follower.isBusy() && !Lift.isBusy() && !Lift2.isBusy() && Rotation.getPosition()<rotPos+rotWait && Lift.getCurrentPosition()>2500) {
                     Wrist.setPosition(wristScore);
