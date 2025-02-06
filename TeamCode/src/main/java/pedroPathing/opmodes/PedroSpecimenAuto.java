@@ -82,15 +82,15 @@ public class PedroSpecimenAuto extends OpMode {
     private final Pose scorePose = new Pose(40, 75, Math.toRadians(0));
 
     /** Lowest (First) Sample from the Spike Mark */
-    private final Pose pickSamplePose = new Pose(26.5, 27, Math.toRadians(0));//pickup1pose
+    private final Pose pickSamplePose = new Pose(25.5, 27, Math.toRadians(0));//pickup1pose
     /** Lowest (First) Sample from the Spike Mark */
-    private final Pose pickSamplePose2 = new Pose(26.5, 17.5, Math.toRadians(0));//pickup1pose
+    private final Pose pickSamplePose2 = new Pose(25.5, 17.5, Math.toRadians(0));//pickup1pose
     /** Lowest (First) Sample from the Spike Mark */
     private final Pose pickSpecimenPose = new Pose(18, 17, Math.toRadians(0));//pickup1pose
     /** Park Pose for our robot, after we do all of the scoring. */
     /** Park Control Pose for our robot, this is used to manipulate the bezier curve that we will create for the parking.
      * The Robot will not go to this pose, it is used a control point for our bezier curve. */
-    private final Pose scorePose2 = new Pose(18, 72, Math.toRadians(0));
+    private final Pose scorePose2 = new Pose(40, 72, Math.toRadians(0));
     private final Pose scorePose3 = new Pose(45, 65, Math.toRadians(0));
     private final Pose midwayPose = new Pose(25, 20, Math.toRadians(0));
     private final Pose parkPose = new Pose(6, 6, Math.toRadians(0));
@@ -226,12 +226,13 @@ public class PedroSpecimenAuto extends OpMode {
             case 3: //TODO: move to pickup specimen
                 if (pathTimer.getElapsedTimeSeconds()>3) {
                     Wrist.setPosition(wristSpecPick);
+                    //Sample.setPosition(openClaw);
                     setPathState(74);
                 }
                 //sleep(5);
                 break;
             case 74:
-                if(pathTimer.getElapsedTimeSeconds()>0.5){
+                if(pathTimer.getElapsedTimeSeconds()>0.1){
                     Sample.setPosition(openClaw);
                     setPathState(57);
                 }
@@ -254,38 +255,43 @@ public class PedroSpecimenAuto extends OpMode {
             case 21:
                 if (pathTimer.getElapsedTimeSeconds()>3) {
                     Wrist.setPosition(wristSpecPick);
-                    setPathState(100);
+                    setPathState(59);
                 }
                 break;
             case 59:
-                if(pathTimer.getElapsedTimeSeconds()>2){
+                if(pathTimer.getElapsedTimeSeconds()>0.1){
                     Sample.setPosition(openClaw);
                     Rotation.setPosition(rotSpec);
                     follower.followPath(pickPickup2);
-                    setPathState(57);
+                    setPathState(100);
                 }
                 break;
             case 100:
                 if (!follower.isBusy() || pathTimer.getElapsedTimeSeconds()>1.5) {
                     Sample.setPosition(closeClaw);
+                    setPathState(200);
+                }
+
+                break;
+            case 200:
+                if (pathTimer.getElapsedTimeSeconds()>0.75) {
+                    Rotation.setPosition(0.16+rotCor);
+                    Wrist.setPosition(wristScore);
                     setPathState(6);
                 }
-
                 break;
             case 6: //todo: go to scoring pose 2
-                if(Sample.getPosition()==closeClaw || pathTimer.getElapsedTimeSeconds()>1.5) {
+                if(pathTimer.getElapsedTimeSeconds()>0.5) {
                     follower.followPath(scorePickup2);
-                    Rotation.setPosition(0.16+rotCor); //0.1675
-                    Wrist.setPosition(wristScore);
-                    //setPathState(7);
+                    setPathState(7);
                 }
                 break;
-
             case 7:
                 if (!follower.isBusy()){
+                    Rotation.setPosition(rotScore);
                     score();
                     Sample.setPosition(0.3);
-                    setPathState(8);
+                    setPathState(800);
                 }
                 break;
             case 8: //todo: go to pick pose
