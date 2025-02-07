@@ -190,6 +190,7 @@ public class PedroSpecimenAuto extends OpMode {
         switch (pathState) {
             case 0: //TODO: move to scorePreload and after 1 second release specimen
                 follower.followPath(scorePreload);
+                Rotation.setPosition(0.175+rotCor);
                 setPathState(1);
                 break;
             case 1:
@@ -200,7 +201,7 @@ public class PedroSpecimenAuto extends OpMode {
                 }
                 break;
             case 25:
-                if (pathTimer.getElapsedTimeSeconds()>1.05 || !Lift.isBusy() && !Lift2.isBusy()) {
+                if (pathTimer.getElapsedTimeSeconds()>1.25 || !Lift.isBusy() && !Lift2.isBusy()) {
                     Sample.setPosition(openClaw);
                     comeBack();
                     follower.followPath(goToPickSample1);
@@ -208,21 +209,20 @@ public class PedroSpecimenAuto extends OpMode {
                 }
                 break;
             case 2: //TODO: drag sample to observation zone
-                if (!follower.isBusy()) {
-                    Sample.setPosition(openClaw);
+                if (pathTimer.getElapsedTimeSeconds()>0.75) {
                     Rotation.setPosition(rotPick-rotDelta);
                     Wrist.setPosition(wristPick);
                     setPathState(55);
                 }
                 break;
             case 55:
-                if (pathTimer.getElapsedTimeSeconds()>0.75 && Rotation.getPosition()>rotPick-rotWait) {
+                if (!follower.isBusy() && pathTimer.getElapsedTimeSeconds()>0.85 || Rotation.getPosition()>rotPick-rotWait) {
                     Rotation.setPosition(rotPick);
                     setPathState(56);
                 }
                 break;
             case 56:
-                if (pathTimer.getElapsedTimeSeconds()>grabDelay-1.5) {
+                if (pathTimer.getElapsedTimeSeconds()>0.1) {
                     Sample.setPosition(closeClaw);
                     setPathState(50);
                 }
@@ -258,14 +258,14 @@ public class PedroSpecimenAuto extends OpMode {
                 }
                 break;
             case 20:
-                if (pathTimer.getElapsedTimeSeconds()>2.5){
+                if (pathTimer.getElapsedTimeSeconds()>2.55){
                     Sample.setPosition(closeClaw);
                     Rotation.setPosition(rotSpec-0.02);
                     setPathState(21);
                 }
                 break;
             case 21:
-                if (pathTimer.getElapsedTimeSeconds()>3) {
+                if (pathTimer.getElapsedTimeSeconds()>2.75) {
                     Wrist.setPosition(wristSpecPick);
                     setPathState(59);
                 }
@@ -279,15 +279,15 @@ public class PedroSpecimenAuto extends OpMode {
                 }
                 break;
             case 100:
-                if (!follower.isBusy() || pathTimer.getElapsedTimeSeconds()>0.75) {
+                if (!follower.isBusy() || pathTimer.getElapsedTimeSeconds()>0.65) {
                     Sample.setPosition(closeClaw);
                     setPathState(200);
                 }
 
                 break;
             case 200:
-                if (pathTimer.getElapsedTimeSeconds()>0.5) {
-                    Rotation.setPosition(0.21+rotCor);
+                if (pathTimer.getElapsedTimeSeconds()>0.1) {
+                    Rotation.setPosition(0.195+rotCor);
                     Wrist.setPosition(wristPick);
                     setPathState(6);
                 }
@@ -331,7 +331,7 @@ public class PedroSpecimenAuto extends OpMode {
                 //sleep(5);
                 break;
             case 101:
-                if (!follower.isBusy() && pathTimer.getElapsedTimeSeconds()>1.25) {
+                if (!follower.isBusy() && pathTimer.getElapsedTimeSeconds()>0.75) {
                     Sample.setPosition(closeClaw);
                     setPathState(201);
                 }
@@ -339,7 +339,7 @@ public class PedroSpecimenAuto extends OpMode {
                 break;
             case 201:
                 if (pathTimer.getElapsedTimeSeconds()>0.75) {
-                    Rotation.setPosition(0.21+rotCor);
+                    Rotation.setPosition(0.195+rotCor);
                     Wrist.setPosition(wristPick);
                     setPathState(61);
                 }
@@ -374,7 +374,7 @@ public class PedroSpecimenAuto extends OpMode {
                 break;
             case 131:// todo: pick up 3rd specimen
                 /* This case checks the robot's position and will wait until the robot position is close (1 inch away) from the pickup2Pose's position */
-                if(!follower.isBusy() || pathTimer.getElapsedTimeSeconds()>0.75) {
+                if(!follower.isBusy() || pathTimer.getElapsedTimeSeconds()>0.5) {
                     /* Since this is a pathChain, we can have Pedro hold the end point while we are scoring the sample */
 
                     follower.followPath(pickPickup4,true);
@@ -383,34 +383,34 @@ public class PedroSpecimenAuto extends OpMode {
                 //sleep(5);
                 break;
             case 1011:
-                if (!follower.isBusy() && pathTimer.getElapsedTimeSeconds()>2.5) {
+                if (!follower.isBusy() && pathTimer.getElapsedTimeSeconds()>1.75) {
                     Sample.setPosition(closeClaw);
                     setPathState(2011);
                 }
 
                 break;
             case 2011:
-                if (pathTimer.getElapsedTimeSeconds()>0.5) {
-                    Rotation.setPosition(0.21+rotCor);
+                if (pathTimer.getElapsedTimeSeconds()>0.25) {
+                    Rotation.setPosition(0.195+rotCor);
                     Wrist.setPosition(wristPick);
                     setPathState(611);
                 }
                 break;
             case 611: //todo: go to scoring pose 2
-                if(pathTimer.getElapsedTimeSeconds()>0.5) {
+                if(pathTimer.getElapsedTimeSeconds()>0.25) {
                     follower.followPath(scorePickup4);
                     setPathState(711);
                 }
                 break;
             case 711:
-                if (!follower.isBusy() || pathTimer.getElapsedTimeSeconds()>3){
+                if (!follower.isBusy() || pathTimer.getElapsedTimeSeconds()>2.75){
                     Rotation.setPosition(rotScore);
                     score();
                     setPathState(24511);
                 }
                 break;
             case 24511:
-                if (pathTimer.getElapsedTimeSeconds()>1.5 || !Lift.isBusy() && !Lift2.isBusy()) {
+                if (pathTimer.getElapsedTimeSeconds()>1.25 || !Lift.isBusy() && !Lift2.isBusy()) {
                     Sample.setPosition(openClaw);
                     comeBack();
                     setPathState(11);
@@ -467,7 +467,7 @@ public class PedroSpecimenAuto extends OpMode {
         Constants.setConstants(FConstants.class, LConstants.class);
         follower = new Follower(hardwareMap);
         follower.setStartingPose(startPose);
-        follower.setMaxPower(0.9);
+        follower.setMaxPower(0.92);
         buildPaths();
         rig1 = hardwareMap.get(DcMotor.class, "rig1");
         rig2 = hardwareMap.get(DcMotor.class, "rig2");
