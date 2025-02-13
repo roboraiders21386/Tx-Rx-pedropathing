@@ -19,6 +19,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import pedroPathing.constants.FConstants;
 import pedroPathing.constants.LConstants;
+import pedroPathing.constants.RobotConstants;
 
 /**
  * This is an example auto that showcases movement and control of two servos autonomously.
@@ -101,11 +102,19 @@ public class PedroSpecimenAuto extends OpMode {
     private final Pose pickMidwayPose2 = new Pose(35, 70, Math.toRadians(0));
     private final Pose pickMidwayPose3 = new Pose(30, 62.5, Math.toRadians(0));
     private final Pose parkControlPose = new Pose(6, 6, Math.toRadians(0));
-
+    private final Pose dragFirst1 = new Pose(26.65, 37, Math.toRadians(0));
+    private final Pose dragFirst2 = new Pose(57.5, 37, Math.toRadians(0));
+    private final Pose dragFirst3 = new Pose(57.5, 27, Math.toRadians(0));
+    private final Pose dragFirst4 = new Pose(13.5, 27, Math.toRadians(0));
+    private final Pose dragSecond1 = new Pose(57.5, 17.5, Math.toRadians(0));
+    private final Pose dragSecond2 = new Pose(17, 17.5, Math.toRadians(0));
+    private final Pose dragThird0 = new Pose(57.5, 22.5, Math.toRadians(0));
+    private final Pose dragThird1 = new Pose(57.5, 15, Math.toRadians(0));
+    private final Pose dragThird2 = new Pose(17, 15, Math.toRadians(0));
     /* These are our Paths and PathChains that we will define in buildPaths() */
     private Path scorePreload, park;
     private PathChain prepToPick, goToMidwayPose2, goToPickSample1, goToPickSample2, pickPickup2, scorePickup2, pickPickup3, scorePickup3, pickPickup4, scorePickup4;
-
+    private PathChain dragFirstOne,dragFirstTwo, dragFirstThree, dragFirstFour, dragSecondOne, dragSecondTwo, dragSecondThree, dragThirdOne, dragThirdTwo, dragThirdThree;
 
     /** Build the paths for the auto (adds, for example, constant/linear headings while doing paths)
      * It is necessary to do this so that all the paths are built before the auto starts. **/
@@ -176,6 +185,46 @@ public class PedroSpecimenAuto extends OpMode {
                 .addPath(new BezierCurve(new Point(pickotherSpecimenPose), new Point(pickMidwayPose3), new Point(scorePose4)))
                 .setLinearHeadingInterpolation(pickotherSpecimenPose.getHeading(), scorePose4.getHeading())
                 .build();
+        dragFirstOne = follower.pathBuilder()
+                .addPath(new BezierLine(new Point(scorePose), new Point(dragFirst1)))
+                .setLinearHeadingInterpolation(scorePose.getHeading(), dragFirst1.getHeading())
+                .build();
+        dragFirstTwo = follower.pathBuilder()
+                .addPath(new BezierLine(new Point(dragFirst1), new Point(dragFirst2)))
+                .setLinearHeadingInterpolation(dragFirst1.getHeading(), dragFirst2.getHeading())
+                .build();
+        dragFirstThree = follower.pathBuilder()
+                .addPath(new BezierLine(new Point(dragFirst2), new Point(dragFirst3)))
+                .setLinearHeadingInterpolation(dragFirst2.getHeading(), dragFirst3.getHeading())
+                .build();
+        dragFirstFour = follower.pathBuilder()
+                .addPath(new BezierLine(new Point(dragFirst3), new Point(dragFirst4)))
+                .setLinearHeadingInterpolation(dragFirst3.getHeading(), dragFirst4.getHeading())
+                .build();
+        dragSecondOne = follower.pathBuilder()
+                .addPath(new BezierLine(new Point(dragFirst4), new Point(dragFirst3)))
+                .setLinearHeadingInterpolation(dragFirst4.getHeading(), dragFirst3.getHeading())
+                .build();
+        dragSecondTwo = follower.pathBuilder()
+                .addPath(new BezierLine(new Point(dragFirst3), new Point(dragSecond1)))
+                .setLinearHeadingInterpolation(dragFirst3.getHeading(), dragSecond1.getHeading())
+                .build();
+        dragSecondThree = follower.pathBuilder()
+                .addPath(new BezierLine(new Point(dragSecond1), new Point(dragSecond2)))
+                .setLinearHeadingInterpolation(dragSecond1.getHeading(), dragSecond2.getHeading())
+                .build();
+        dragThirdOne = follower.pathBuilder()
+                .addPath(new BezierLine(new Point(dragSecond2), new Point(dragThird0)))
+                .setLinearHeadingInterpolation(dragSecond2.getHeading(), dragThird0.getHeading())
+                .build();
+        dragThirdTwo = follower.pathBuilder()
+                .addPath(new BezierLine(new Point(dragSecond1), new Point(dragThird1)))
+                .setLinearHeadingInterpolation(dragSecond1.getHeading(), dragThird1.getHeading())
+                .build();
+        dragThirdThree = follower.pathBuilder()
+                .addPath(new BezierLine(new Point(dragThird1), new Point(dragThird2)))
+                .setLinearHeadingInterpolation(dragThird1.getHeading(), dragThird2.getHeading())
+                .build();
         /* This is our park path. We are using a BezierCurve with 3 points, which is a curved line that is curved based off of the control point */
         park = new Path(new BezierCurve(new Point(scorePose3), new Point(pickMidwayPose3), new Point(parkPose)));
         park.setLinearHeadingInterpolation(scorePose3.getHeading(), parkPose.getHeading());
@@ -198,7 +247,71 @@ public class PedroSpecimenAuto extends OpMode {
                 if (!follower.isBusy() || pathTimer.getElapsedTimeSeconds()>1.5) {
                     Rotation.setPosition(rotScore);
                     score();
-                    setPathState(25);
+                    setPathState(251);
+                }
+                break;
+            case 251:
+                if (pathTimer.getElapsedTimeSeconds()>1.5 || !Lift.isBusy() && !Lift2.isBusy()) {
+                    liftPow = 0.65;
+                    Sample.setPosition(openClaw);
+                    comeBack();
+                    follower.setMaxPower(1);
+                    follower.followPath(dragFirstOne);
+                    setPathState(252);
+                }
+                break;
+            case 252:
+                if (follower.getPose().getY()<37.75) {
+                    follower.followPath(dragFirstTwo);
+                    setPathState(253);
+                }
+                break;
+            case 253:
+                if (follower.getPose().getX()>55) {
+                    follower.followPath(dragFirstThree);
+                    setPathState(254);
+                }
+                break;
+            case 254:
+                if (follower.getPose().getY()<30) {
+                    follower.followPath(dragFirstFour);
+                    setPathState(255);
+                }
+                break;
+            case 255:
+                if (follower.getPose().getX()<20) {
+                    follower.followPath(dragSecondOne);
+                    setPathState(256);
+                }
+                break;
+            case 256:
+                if (follower.getPose().getX()>55) {
+                    follower.followPath(dragSecondTwo);
+                    setPathState(257);
+                }
+                break;
+            case 257:
+                if (follower.getPose().getY()<20) {
+                    follower.followPath(dragSecondThree);
+                    setPathState(258);
+                }
+                break;
+            case 258:
+                if (follower.getPose().getX()<20) {
+                    follower.followPath(dragThirdOne);
+                    setPathState(259);
+                }
+                break;
+            case 259:
+                if (!follower.isBusy()) {
+                    follower.followPath(dragThirdTwo);
+                    setPathState(260);
+                }
+                break;
+            case 260:
+                if (!follower.isBusy()) {
+                    follower.followPath(dragThirdThree);
+                    setPathState(261);
                 }
                 break;
             case 25:
