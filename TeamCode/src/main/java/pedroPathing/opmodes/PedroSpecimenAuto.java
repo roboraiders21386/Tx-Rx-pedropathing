@@ -59,11 +59,11 @@ public class PedroSpecimenAuto extends OpMode {
     private DcMotor Lift, Lift2, rig1, rig2;
     private int pathState;
     private double rotPos = 0.17, rotPick = 0.42, rotDelta = 0.01, rotWait = 3*rotDelta;
-    private double wristScore = 0, wristPick = 0.9, wristSpecial = (wristScore*3+wristPick)/4.0, wristPick4 = 0.75, wristSpecPick = 0.3;
+    private double wristScore = 0, wristPick = 0.75, wristSpecial = (wristScore*3+wristPick)/4.0, wristPick4 = 0.75, wristSpecPick = 0;
     private double closeClaw = 0, openClaw = 0.3;
-    private int liftScore = 1500;
+    private int liftScore = 1800;
     private double grabDelay = 2;
-    double rotCor = 0.0075, liftPow = 0.65, rotScore = rotPos+0.08, rotBack = 0.21, rotSpec=0.12;
+    double rotCor = 0.0075, liftPow = 0.65, rotScore = rotPos+0.08, rotBack = 0.21, rotSpec=0.12+0.015;
 
 
     /* Create and Define Poses + Paths
@@ -82,12 +82,12 @@ public class PedroSpecimenAuto extends OpMode {
     private final Pose scorePose = new Pose(40, 75, Math.toRadians(0));
 
     /** Lowest (First) Sample from the Spike Mark */
-    private final Pose pickSamplePose = new Pose(26.25, 27, Math.toRadians(0));//pickup1pose
+    private final Pose pickSamplePose = new Pose(26.65, 27, Math.toRadians(0));//pickup1pose
     /** Lowest (First) Sample from the Spike Mark */
-    private final Pose pickSamplePose2 = new Pose(26, 17.5, Math.toRadians(0));//pickup1pose
+    private final Pose pickSamplePose2 = new Pose(26.3, 17.5, Math.toRadians(0));//pickup1pose
     /** Lowest (First) Sample from the Spike Mark */
-    private final Pose pickSpecimenPose = new Pose(18, 17, Math.toRadians(0));//pickup1pose
-    private final Pose pickotherSpecimenPose = new Pose(19.75, 30, Math.toRadians(0));//pickup1pose
+    private final Pose pickSpecimenPose = new Pose(17, 17, Math.toRadians(0));//pickup1pose
+    private final Pose pickotherSpecimenPose = new Pose(19, 30, Math.toRadians(0));//pickup1pose
 
     /** Park Pose for our robot, after we do all of the scoring. */
     /** Park Control Pose for our robot, this is used to manipulate the bezier curve that we will create for the parking.
@@ -189,8 +189,9 @@ public class PedroSpecimenAuto extends OpMode {
         double scoreDelay = 0.75;
         switch (pathState) {
             case 0: //TODO: move to scorePreload and after 1 second release specimen
+                liftPow = 0.8;
                 follower.followPath(scorePreload);
-                Rotation.setPosition(0.1675+rotCor);
+                Rotation.setPosition(0.17125+rotCor);
                 setPathState(1);
                 break;
             case 1:
@@ -201,7 +202,8 @@ public class PedroSpecimenAuto extends OpMode {
                 }
                 break;
             case 25:
-                if (pathTimer.getElapsedTimeSeconds()>1.25 || !Lift.isBusy() && !Lift2.isBusy()) {
+                if (pathTimer.getElapsedTimeSeconds()>1.5 || !Lift.isBusy() && !Lift2.isBusy()) {
+                    liftPow = 0.65;
                     Sample.setPosition(openClaw);
                     comeBack();
                     follower.followPath(goToPickSample1);
@@ -279,7 +281,7 @@ public class PedroSpecimenAuto extends OpMode {
                 }
                 break;
             case 100:
-                if (!follower.isBusy() || pathTimer.getElapsedTimeSeconds()>0.65) {
+                if (!follower.isBusy() || pathTimer.getElapsedTimeSeconds()>0.75) {
                     Sample.setPosition(closeClaw);
                     setPathState(200);
                 }
@@ -287,7 +289,7 @@ public class PedroSpecimenAuto extends OpMode {
                 break;
             case 200:
                 if (pathTimer.getElapsedTimeSeconds()>0.1) {
-                    Rotation.setPosition(0.1875+rotCor);
+                    Rotation.setPosition(0.1925+rotCor);
                     Wrist.setPosition(wristPick);
                     setPathState(6);
                 }
@@ -332,7 +334,7 @@ public class PedroSpecimenAuto extends OpMode {
                 //sleep(5);
                 break;
             case 101:
-                if (!follower.isBusy() && pathTimer.getElapsedTimeSeconds()>0.75) {
+                if (!follower.isBusy() || pathTimer.getElapsedTimeSeconds()>3) {
                     Sample.setPosition(closeClaw);
                     setPathState(201);
                 }
@@ -340,7 +342,7 @@ public class PedroSpecimenAuto extends OpMode {
                 break;
             case 201:
                 if (pathTimer.getElapsedTimeSeconds()>0.1) {
-                    Rotation.setPosition(0.19+rotCor);
+                    Rotation.setPosition(0.1925+rotCor);
                     Wrist.setPosition(wristPick);
                     setPathState(61);
                 }
@@ -392,7 +394,7 @@ public class PedroSpecimenAuto extends OpMode {
                 break;
             case 2011:
                 if (pathTimer.getElapsedTimeSeconds()>0.1) {
-                    Rotation.setPosition(0.195+rotCor);
+                    Rotation.setPosition(0.1925+rotCor);
                     Wrist.setPosition(wristPick);
                     setPathState(611);
                 }
@@ -488,7 +490,7 @@ public class PedroSpecimenAuto extends OpMode {
         Wrist = hardwareMap.get(Servo.class, "wrist");
         swap = hardwareMap.get(Servo.class, "switch");
         Rotation.setPosition(0.16+rotCor); //0.1675
-        Wrist.setPosition(1);
+        Wrist.setPosition(wristPick);
         Sample.setPosition(closeClaw);
         swap.setPosition(0.4);
     }

@@ -60,7 +60,7 @@ public class LeagueSampleAuto extends OpMode {
     private final Pose pickup1Pose = new Pose(30.5, 123.5, Math.toRadians(0));
 
     /** Middle (Second) Sample from the Spike Mark */
-    private final Pose pickup2Pose = new Pose(30.5, 133, Math.toRadians(0));
+    private final Pose pickup2Pose = new Pose(30.5, 132.5, Math.toRadians(0));
 
     /** Highest (Third) Sample from the Spike Mark */
     private final Pose pickup3Pose = new Pose(44, 129, Math.toRadians(90));
