@@ -2,6 +2,7 @@ package pedroPathing.opmodes;
 
 
 import com.pedropathing.follower.Follower;
+import com.pedropathing.follower.FollowerConstants;
 import com.pedropathing.localization.Pose;
 import com.pedropathing.pathgen.BezierCurve;
 import com.pedropathing.pathgen.BezierLine;
@@ -9,6 +10,7 @@ import com.pedropathing.pathgen.Path;
 import com.pedropathing.pathgen.PathChain;
 import com.pedropathing.pathgen.Point;
 import com.pedropathing.util.Constants;
+import com.pedropathing.util.CustomFilteredPIDFCoefficients;
 import com.pedropathing.util.Timer;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
@@ -19,6 +21,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import pedroPathing.constants.FConstants;
 import pedroPathing.constants.LConstants;
+import pedroPathing.constants.RobotConstants;
 
 /**
  * This is an example auto that showcases movement and control of two servos autonomously.
@@ -48,8 +51,8 @@ import pedroPathing.constants.LConstants;
 
 //}
 
-@Autonomous(name = "Pick Specimen", group = "Autonomous")
-public class PedroSpecimenAuto extends OpMode {
+@Autonomous(name = "Auton Right - Specimen", group = "Autonomous")
+public class PedroPushSpecimen extends OpMode {
     private Follower follower;
     private Timer pathTimer, actionTimer, opmodeTimer, sleepTimer;
 
@@ -59,11 +62,11 @@ public class PedroSpecimenAuto extends OpMode {
     private DcMotor Lift, Lift2, rig1, rig2;
     private int pathState;
     private double rotPos = 0.17, rotPick = 0.42, rotDelta = 0.01, rotWait = 3*rotDelta;
-    private double wristScore = 0, wristPick = 0.75, wristSpecial = (wristScore*3+wristPick)/4.0, wristPick4 = 0.75, wristSpecPick = 0;
+    private double wristScore = 0.75, wristPick = 0, wristSpecial = (wristScore*3+wristPick)/4.0, wristPick4 = 0.75, wristSpecPick = 0.75;
     private double closeClaw = 0, openClaw = 0.3;
-    private int liftScore = 1800;
+    private int liftScore = 1700;
     private double grabDelay = 2;
-    double rotCor = 0.0075, liftPow = 0.65, rotScore = rotPos+0.08, rotBack = 0.21, rotSpec=0.12+0.015;
+    double rotCor = 0.0075, liftPow = 0.65, rotScore = rotPos+0.08, rotBack = 0.21, rotSpec=0.125/*+0.015*/;
 
 
     /* Create and Define Poses + Paths
@@ -79,33 +82,43 @@ public class PedroSpecimenAuto extends OpMode {
     private final Pose startPose = new Pose(9, 60, Math.toRadians(0));
 
     /** Scoring Pose of our robot. It is facing the submersible at a -45 degree (315 degree) angle. */
-    private final Pose scorePose = new Pose(40, 73, Math.toRadians(0));
+    private final Pose scorePose = new Pose(40, 67, Math.toRadians(0));
 
     /** Lowest (First) Sample from the Spike Mark */
     private final Pose pickSamplePose = new Pose(26.65, 27, Math.toRadians(0));//pickup1pose
     /** Lowest (First) Sample from the Spike Mark */
     private final Pose pickSamplePose2 = new Pose(26.3, 17.5, Math.toRadians(0));//pickup1pose
     /** Lowest (First) Sample from the Spike Mark */
-    private final Pose pickSpecimenPose = new Pose(17, 17, Math.toRadians(0));//pickup1pose
+    private final Pose pickSpecimenPose = new Pose(17.5, 38, Math.toRadians(0));//pickup1pose
     private final Pose pickotherSpecimenPose = new Pose(19, 30, Math.toRadians(0));//pickup1pose
 
     /** Park Pose for our robot, after we do all of the scoring. */
     /** Park Control Pose for our robot, this is used to manipulate the bezier curve that we will create for the parking.
      * The Robot will not go to this pose, it is used a control point for our bezier curve. */
-    private final Pose scorePose2 = new Pose(40, 72, Math.toRadians(0));
-    private final Pose scorePose3 = new Pose(40, 69, Math.toRadians(0));
-    private final Pose scorePose4 = new Pose(40, 70.5, Math.toRadians(0));
+    private final Pose scorePose2 = new Pose(40, 65, Math.toRadians(0));
+    private final Pose scorePose3 = new Pose(40, 70, Math.toRadians(0));
+    private final Pose scorePose4 = new Pose(40, 72, Math.toRadians(0));
     private final Pose midwayPose = new Pose(25, 20, Math.toRadians(0));
     private final Pose parkPose = new Pose(9, 26, Math.toRadians(0));
     private final Pose pickMidwayPose = new Pose(35, 31, Math.toRadians(0));
     private final Pose pickMidwayPose2 = new Pose(35, 70, Math.toRadians(0));
     private final Pose pickMidwayPose3 = new Pose(30, 62.5, Math.toRadians(0));
     private final Pose parkControlPose = new Pose(6, 6, Math.toRadians(0));
-
+    private final Pose prepToPick = new Pose(25, 35, Math.toRadians(0));
+    private final Pose dragFirst1 = new Pose(26.65, 37, Math.toRadians(0));
+    private final Pose dragFirst2 = new Pose(57.5, 37, Math.toRadians(0));
+    private final Pose dragFirst3 = new Pose(57.5, 27, Math.toRadians(0));
+    private final Pose dragFirst4 = new Pose(13.5, 27, Math.toRadians(0));
+    private final Pose dragSecond1 = new Pose(57.5, 17.5, Math.toRadians(0));
+    private final Pose dragSecond2 = new Pose(17, 17.5, Math.toRadians(0));
+    private final Pose dragThird0 = new Pose(57.5, 15, Math.toRadians(0));
+    private final Pose dragThird1 = new Pose(57.5, 13.5, Math.toRadians(0));
+    private final Pose dragThird2 = new Pose(17, 13.5, Math.toRadians(0));
     /* These are our Paths and PathChains that we will define in buildPaths() */
     private Path scorePreload, park;
-    private PathChain prepToPick, goToMidwayPose2, goToPickSample1, goToPickSample2, pickPickup2, scorePickup2, pickPickup3, scorePickup3, pickPickup4, scorePickup4;
-
+    private PathChain goToMidwayPose2, goToPickSample1, goToPickSample2, pickPickup2, scorePickup2, pickPickup3, scorePickup3, pickPickup4, scorePickup4;
+    private PathChain dragFirstOne,dragFirstTwo, dragFirstThree, dragFirstFour, dragSecondOne, dragSecondTwo, dragSecondThree, dragThirdOne, dragThirdTwo, dragThirdThree;
+    private PathChain score2, pick3, score3, pick4, score4, pick5, score5;
 
     /** Build the paths for the auto (adds, for example, constant/linear headings while doing paths)
      * It is necessary to do this so that all the paths are built before the auto starts. **/
@@ -176,6 +189,66 @@ public class PedroSpecimenAuto extends OpMode {
                 .addPath(new BezierCurve(new Point(pickotherSpecimenPose), new Point(pickMidwayPose3), new Point(scorePose4)))
                 .setLinearHeadingInterpolation(pickotherSpecimenPose.getHeading(), scorePose4.getHeading())
                 .build();
+        dragFirstOne = follower.pathBuilder()
+                .addPath(new BezierLine(new Point(scorePose), new Point(dragFirst1)))
+                .setLinearHeadingInterpolation(scorePose.getHeading(), dragFirst1.getHeading())
+                .build();
+        dragFirstTwo = follower.pathBuilder()
+                .addPath(new BezierLine(new Point(dragFirst1), new Point(dragFirst2)))
+                .setLinearHeadingInterpolation(dragFirst1.getHeading(), dragFirst2.getHeading())
+                .build();
+        dragFirstThree = follower.pathBuilder()
+                .addPath(new BezierLine(new Point(dragFirst2), new Point(dragFirst3)))
+                .setLinearHeadingInterpolation(dragFirst2.getHeading(), dragFirst3.getHeading())
+                .build();
+        dragFirstFour = follower.pathBuilder()
+                .addPath(new BezierLine(new Point(dragFirst3), new Point(dragFirst4)))
+                .setLinearHeadingInterpolation(dragFirst3.getHeading(), dragFirst4.getHeading())
+                .build();
+        dragSecondOne = follower.pathBuilder()
+                .addPath(new BezierLine(new Point(dragFirst4), new Point(dragFirst3)))
+                .setLinearHeadingInterpolation(dragFirst4.getHeading(), dragFirst3.getHeading())
+                .build();
+        dragSecondTwo = follower.pathBuilder()
+                .addPath(new BezierLine(new Point(dragFirst3), new Point(dragSecond1)))
+                .setLinearHeadingInterpolation(dragFirst3.getHeading(), dragSecond1.getHeading())
+                .build();
+        dragSecondThree = follower.pathBuilder()
+                .addPath(new BezierLine(new Point(dragSecond1), new Point(dragSecond2)))
+                .setLinearHeadingInterpolation(dragSecond1.getHeading(), dragSecond2.getHeading())
+                .build();
+        dragThirdOne = follower.pathBuilder()
+                .addPath(new BezierLine(new Point(dragSecond2), new Point(dragThird0)))
+                .setLinearHeadingInterpolation(dragSecond2.getHeading(), dragThird0.getHeading())
+                .build();
+        dragThirdTwo = follower.pathBuilder()
+                .addPath(new BezierLine(new Point(dragSecond1), new Point(dragThird1)))
+                .setLinearHeadingInterpolation(dragSecond1.getHeading(), dragThird1.getHeading())
+                .build();
+        dragThirdThree = follower.pathBuilder()
+                .addPath(new BezierLine(new Point(dragThird1), new Point(dragThird2)))
+                .setLinearHeadingInterpolation(dragThird1.getHeading(), dragThird2.getHeading())
+                .build();
+        score2 = follower.pathBuilder()
+                .addPath(new BezierLine(new Point(dragThird2), new Point(scorePose2)))
+                .setLinearHeadingInterpolation(dragThird2.getHeading(), scorePose2.getHeading())
+                .build();
+        pick3 = follower.pathBuilder()
+                .addPath(new BezierCurve(new Point(scorePose2), new Point(prepToPick), new Point(pickSpecimenPose)))
+                .setLinearHeadingInterpolation(scorePose2.getHeading(), pickSpecimenPose.getHeading())
+                .build();
+        score3 = follower.pathBuilder()
+                .addPath(new BezierLine(new Point(pickSpecimenPose), new Point(scorePose3)))
+                .setLinearHeadingInterpolation(pickSpecimenPose.getHeading(), scorePose3.getHeading())
+                .build();
+        pick4 = follower.pathBuilder()
+                .addPath(new BezierCurve(new Point(scorePose3), new Point(prepToPick), new Point(pickSpecimenPose)))
+                .setLinearHeadingInterpolation(scorePose3.getHeading(), pickSpecimenPose.getHeading())
+                .build();
+        score4 = follower.pathBuilder()
+                .addPath(new BezierLine(new Point(pickSpecimenPose), new Point(scorePose4)))
+                .setLinearHeadingInterpolation(pickSpecimenPose.getHeading(), scorePose4.getHeading())
+                .build();
         /* This is our park path. We are using a BezierCurve with 3 points, which is a curved line that is curved based off of the control point */
         park = new Path(new BezierCurve(new Point(scorePose3), new Point(pickMidwayPose3), new Point(parkPose)));
         park.setLinearHeadingInterpolation(scorePose3.getHeading(), parkPose.getHeading());
@@ -198,7 +271,162 @@ public class PedroSpecimenAuto extends OpMode {
                 if (!follower.isBusy() || pathTimer.getElapsedTimeSeconds()>1.5) {
                     Rotation.setPosition(rotScore);
                     score();
-                    setPathState(25);
+                    setPathState(251);
+                }
+                break;
+            case 251:
+                if (pathTimer.getElapsedTimeSeconds()>1 || !Lift.isBusy() && !Lift2.isBusy()) {
+                    liftPow = 0.65;
+                    Sample.setPosition(openClaw);
+                    comeBack();
+                    follower.setMaxPower(1);
+                    follower.followPath(dragFirstOne);
+                    setPathState(252);
+                }
+                break;
+            case 252:
+                if (follower.getPose().getY()<37.75) {
+                    FollowerConstants.drivePIDFCoefficients = new CustomFilteredPIDFCoefficients(0.03,0,0.00000075,0.6,0);
+                    follower.followPath(dragFirstTwo);
+                    setPathState(253);
+                }
+                break;
+            case 253:
+                if (follower.getPose().getX()>55) {
+                    follower.followPath(dragFirstThree);
+                    setPathState(254);
+                }
+                break;
+            case 254:
+                if (follower.getPose().getY()<30) {
+                    follower.followPath(dragFirstFour);
+                    setPathState(255);
+                }
+                break;
+            case 255:
+                if (follower.getPose().getX()<20) {
+                    follower.followPath(dragSecondOne);
+                    setPathState(256);
+                }
+                break;
+            case 256:
+                if (follower.getPose().getX()>55) {
+                    follower.followPath(dragSecondTwo);
+                    setPathState(257);
+                }
+                break;
+            case 257:
+                if (follower.getPose().getY()<20) {
+                    follower.followPath(dragSecondThree);
+                    setPathState(258);
+                }
+                break;
+            case 258:
+                if (follower.getPose().getX()<20) {
+                    follower.followPath(dragThirdOne);
+                    setPathState(259);
+                }
+                break;
+            case 259:
+                if (follower.getPose().getX()>55) {
+                    follower.followPath(dragThirdTwo);
+                    Rotation.setPosition(rotSpec);
+                    Wrist.setPosition(wristSpecPick);
+                    setPathState(260);
+                }
+                break;
+            case 260:
+                if (follower.getPose().getY()<15 || pathTimer.getElapsedTimeSeconds()>1) {
+                    follower.followPath(dragThirdThree);
+                    setPathState(261);
+                }
+                break;
+            case 261:
+                if (!follower.isBusy()|| pathTimer.getElapsedTimeSeconds()>1.5) {
+                    FollowerConstants.drivePIDFCoefficients = new CustomFilteredPIDFCoefficients(0.0075,0,0.00000005,0.6,0);
+                    follower.setMaxPower(0.92);
+                    setPathState(262);
+                }
+                break;
+            case 262:
+                if (pathTimer.getElapsedTimeSeconds()>0.5) {
+                    Sample.setPosition(closeClaw);
+                    follower.followPath(score2);
+                    Rotation.setPosition(0.18+rotCor);
+                    Wrist.setPosition(wristPick);
+                    setPathState(263);
+                }
+                break;
+            case 263:
+                if (!follower.isBusy() || pathTimer.getElapsedTimeSeconds()>2.5) {
+
+                    Rotation.setPosition(rotScore);
+                    score();
+                    follower.breakFollowing();
+                    setPathState(264);
+                }
+                break;
+            case 264:
+                if (pathTimer.getElapsedTimeSeconds()>1 || !Lift.isBusy() && !Lift2.isBusy()) {
+                    liftPow = 0.65;
+                    Sample.setPosition(openClaw);
+                    comeBack();
+                    follower.followPath(pick3);
+                    Rotation.setPosition(rotSpec);
+                    Wrist.setPosition(wristSpecPick);
+                    setPathState(265);
+                }
+                break;
+            case 265:
+                if (!follower.isBusy() || pathTimer.getElapsedTimeSeconds()>2.5) {
+                    Sample.setPosition(closeClaw);
+                    follower.followPath(score3);
+                    Rotation.setPosition(0.18+rotCor);
+                    Wrist.setPosition(wristPick);
+                    setPathState(266);
+                }
+                break;
+            case 266:
+                if (!follower.isBusy() || pathTimer.getElapsedTimeSeconds()>2.5) {
+                    Rotation.setPosition(rotScore);
+                    score();
+                    follower.breakFollowing();
+                    setPathState(267);
+                }
+                break;
+            case 267:
+                if (pathTimer.getElapsedTimeSeconds()>1 || !Lift.isBusy() && !Lift2.isBusy()) {
+                    liftPow = 0.65;
+                    Sample.setPosition(openClaw);
+                    comeBack();
+                    follower.followPath(pick4);
+                    setPathState(268);
+                }
+                break;
+            case 268:
+                if (!follower.isBusy() || pathTimer.getElapsedTimeSeconds()>2.5) {
+                    Sample.setPosition(closeClaw);
+                    follower.followPath(score4);
+                    Rotation.setPosition(0.18+rotCor);
+                    Wrist.setPosition(wristPick);
+                    setPathState(269);
+                }
+                break;
+            case 269:
+                if (!follower.isBusy() || pathTimer.getElapsedTimeSeconds()>2.5) {
+                    Rotation.setPosition(rotScore);
+                    score();
+                    follower.breakFollowing();
+                    setPathState(270);
+                }
+                break;
+            case 270:
+                if (pathTimer.getElapsedTimeSeconds()>1 || !Lift.isBusy() && !Lift2.isBusy()) {
+                    liftPow = 0.65;
+                    Sample.setPosition(openClaw);
+                    comeBack();
+                    //follower.followPath(pick4);
+                    setPathState(271);
                 }
                 break;
             case 25:
@@ -492,7 +720,7 @@ public class PedroSpecimenAuto extends OpMode {
         Rotation.setPosition(0.16+rotCor); //0.1675
         Wrist.setPosition(wristPick);
         Sample.setPosition(closeClaw);
-        swap.setPosition(0.4);
+        swap.setPosition(0.18);
     }
 
     /** This method is called continuously after Init while waiting for "play". **/
@@ -548,7 +776,7 @@ public class PedroSpecimenAuto extends OpMode {
     public void comeBack() {
         //Sample.setPosition(0.3);
         Rotation.setPosition(0.16+rotCor);
-        Wrist.setPosition(1);
+        Wrist.setPosition(wristPick);
         Lift.setTargetPosition(0);
         Lift.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         Lift.setPower(liftPow);
