@@ -413,6 +413,8 @@ public class PedroPushSpecimen extends OpMode {
                     Sample.setPosition(openClaw);
                     comeBack();
                     follower.followPath(pick4);
+                    Rotation.setPosition(rotSpec);
+                    Wrist.setPosition(wristSpecPick);
                     setPathState(268);
                 }
                 break;
