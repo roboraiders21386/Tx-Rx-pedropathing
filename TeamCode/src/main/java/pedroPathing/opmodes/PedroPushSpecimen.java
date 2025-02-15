@@ -98,22 +98,22 @@ public class PedroPushSpecimen extends OpMode {
     private final Pose scorePose2 = new Pose(40, 65, Math.toRadians(0));
     private final Pose scorePose3 = new Pose(40, 70, Math.toRadians(0));
     private final Pose scorePose4 = new Pose(40, 72, Math.toRadians(0));
-    private final Pose midwayPose = new Pose(25, 20, Math.toRadians(0));
+    private final Pose midwayPose = new Pose(30, 60, Math.toRadians(0));
     private final Pose parkPose = new Pose(9, 26, Math.toRadians(0));
     private final Pose pickMidwayPose = new Pose(35, 31, Math.toRadians(0));
     private final Pose pickMidwayPose2 = new Pose(35, 70, Math.toRadians(0));
     private final Pose pickMidwayPose3 = new Pose(30, 62.5, Math.toRadians(0));
     private final Pose parkControlPose = new Pose(6, 6, Math.toRadians(0));
     private final Pose prepToPick = new Pose(25, 35, Math.toRadians(0));
-    private final Pose dragFirst1 = new Pose(26.65, 37, Math.toRadians(0));
+    private final Pose dragFirst1 = new Pose(26.65, 35, Math.toRadians(0));
     private final Pose dragFirst2 = new Pose(57.5, 37, Math.toRadians(0));
     private final Pose dragFirst3 = new Pose(57.5, 27, Math.toRadians(0));
     private final Pose dragFirst4 = new Pose(13.5, 27, Math.toRadians(0));
     private final Pose dragSecond1 = new Pose(57.5, 17.5, Math.toRadians(0));
     private final Pose dragSecond2 = new Pose(17, 17.5, Math.toRadians(0));
-    private final Pose dragThird0 = new Pose(57.5, 15, Math.toRadians(0));
-    private final Pose dragThird1 = new Pose(57.5, 13.5, Math.toRadians(0));
-    private final Pose dragThird2 = new Pose(17, 13.5, Math.toRadians(0));
+    private final Pose dragThird0 = new Pose(57.5, 17, Math.toRadians(0));
+    private final Pose dragThird1 = new Pose(57.5, 12.5, Math.toRadians(0));
+    private final Pose dragThird2 = new Pose(17, 12.5, Math.toRadians(0));
     /* These are our Paths and PathChains that we will define in buildPaths() */
     private Path scorePreload, park;
     private PathChain goToMidwayPose2, goToPickSample1, goToPickSample2, pickPickup2, scorePickup2, pickPickup3, scorePickup3, pickPickup4, scorePickup4;
@@ -157,7 +157,11 @@ public class PedroPushSpecimen extends OpMode {
                 .addPath(new BezierLine(new Point(pickSamplePose), new Point(pickSamplePose2)))
                 .setLinearHeadingInterpolation(pickSamplePose.getHeading(), pickSamplePose2.getHeading())
                 .build();
-
+        /* This is our grabPickup1 PathChain. We are using a single path with a BezierLine, which is a straight line. */
+        goToMidwayPose2 = follower.pathBuilder()
+                .addPath(new BezierLine(new Point(pickSpecimenPose), new Point(midwayPose)))
+                .setLinearHeadingInterpolation(pickSpecimenPose.getHeading(),midwayPose.getHeading())
+                .build();
         /* This is our pickPickup2 PathChain. We are using a single path with a BezierLine, which is a straight line. */
         pickPickup2 = follower.pathBuilder()
                 .addPath(new BezierLine(new Point(pickSamplePose2), new Point(pickSpecimenPose)))
@@ -166,8 +170,8 @@ public class PedroPushSpecimen extends OpMode {
 
         /* This is our scorePickup2 PathChain. We are using a single path with a BezierLine, which is a straight line. */
         scorePickup2 = follower.pathBuilder()
-                .addPath(new BezierLine(new Point(pickSpecimenPose), new Point(scorePose2)))
-                .setLinearHeadingInterpolation(pickSpecimenPose.getHeading(), scorePose2.getHeading())
+                .addPath(new BezierLine(new Point(midwayPose), new Point(scorePose2)))
+                .setLinearHeadingInterpolation(midwayPose.getHeading(), scorePose2.getHeading())
                 .build();
 
         /* This is our scorePickup3 PathChain. We are using a single path with a BezierLine, which is a straight line. */
@@ -269,7 +273,7 @@ public class PedroPushSpecimen extends OpMode {
                 break;
             case 1:
                 if (!follower.isBusy() || pathTimer.getElapsedTimeSeconds()>1.5) {
-                    Rotation.setPosition(rotScore);
+                    Rotation.setPosition(rotScore+0.05);
                     score();
                     setPathState(251);
                 }
@@ -312,16 +316,18 @@ public class PedroPushSpecimen extends OpMode {
             case 256:
                 if (follower.getPose().getX()>55) {
                     follower.followPath(dragSecondTwo);
+                    Rotation.setPosition(rotSpec);
+                    Wrist.setPosition(wristSpecPick);
                     setPathState(257);
                 }
                 break;
             case 257:
                 if (follower.getPose().getY()<20) {
                     follower.followPath(dragSecondThree);
-                    setPathState(258);
+                    setPathState(261);
                 }
                 break;
-            case 258:
+           /* case 258:
                 if (follower.getPose().getX()<20) {
                     follower.followPath(dragThirdOne);
                     setPathState(259);
@@ -341,17 +347,25 @@ public class PedroPushSpecimen extends OpMode {
                     setPathState(261);
                 }
                 break;
+
+            */
             case 261:
                 if (!follower.isBusy()|| pathTimer.getElapsedTimeSeconds()>1.5) {
-                    FollowerConstants.drivePIDFCoefficients = new CustomFilteredPIDFCoefficients(0.0075,0,0.00000005,0.6,0);
+                   // FollowerConstants.drivePIDFCoefficients = new CustomFilteredPIDFCoefficients(0.0075,0,0.00000005,0.6,0);
                     follower.setMaxPower(0.92);
                     setPathState(262);
                 }
                 break;
             case 262:
-                if (pathTimer.getElapsedTimeSeconds()>0.5) {
+                if (pathTimer.getElapsedTimeSeconds()>1) {
                     Sample.setPosition(closeClaw);
-                    follower.followPath(score2);
+                    follower.followPath(goToMidwayPose2);
+                    setPathState(297);
+                }
+                break;
+            case 297:
+                if(!follower.isBusy()){
+                    follower.followPath(scorePickup2);
                     Rotation.setPosition(0.18+rotCor);
                     Wrist.setPosition(wristPick);
                     setPathState(263);
@@ -359,7 +373,6 @@ public class PedroPushSpecimen extends OpMode {
                 break;
             case 263:
                 if (!follower.isBusy() || pathTimer.getElapsedTimeSeconds()>2.5) {
-
                     Rotation.setPosition(rotScore);
                     score();
                     follower.breakFollowing();

@@ -57,10 +57,10 @@ public class LeagueSampleAuto extends OpMode {
     private final Pose scorePose = new Pose(17, 127, Math.toRadians(315));
 
     /** Lowest (First) Sample from the Spike Mark */
-    private final Pose pickup1Pose = new Pose(30.5, 123.5, Math.toRadians(0));
+    private final Pose pickup1Pose = new Pose(30, 123.5, Math.toRadians(0));
 
     /** Middle (Second) Sample from the Spike Mark */
-    private final Pose pickup2Pose = new Pose(30.5, 132.5, Math.toRadians(0));
+    private final Pose pickup2Pose = new Pose(30, 132.5, Math.toRadians(0));
 
     /** Highest (Third) Sample from the Spike Mark */
     private final Pose pickup3Pose = new Pose(44, 129, Math.toRadians(90));
@@ -75,7 +75,7 @@ public class LeagueSampleAuto extends OpMode {
     /* These are our Paths and PathChains that we will define in buildPaths() */
     private Path scorePreload, park;
     private double rotPos = 0.17, rotPick = 0.39, rotDelta = 0.05, rotWait = 3*rotDelta;
-    private double wristScore = 0, wristPick = 0.9, wristSpecial = (wristScore*3+wristPick)/4.0, wristPick4 = 0.75;
+    private double wristScore = 0.8, wristPick = 0, wristSpecial = (wristScore*3+wristPick)/4.0, wristPick4 = 0.75;
     private double closeClaw = 0, openClaw = 0.3;
     private double grabDelay = 0.75, scoreDelay = 0.75;
 
@@ -174,22 +174,22 @@ public class LeagueSampleAuto extends OpMode {
                 boolean condition = Wrist.getPosition()<wristScore+0.2;
                 if (pathTimer.getElapsedTimeSeconds()>scoreDelay) {
                     Sample.setPosition(openClaw);
-                    Rotation.setPosition(rotPick-rotDelta);
+                    Rotation.setPosition(rotPick+rotDelta);
                     Wrist.setPosition(wristPick);
                     comeBack();
                     follower.followPath(grabPickup1, true);
-                    setPathState(3);
+                    setPathState(6);
                 }
                 break;
-            case 3:
-                if (!follower.isBusy() && !Lift.isBusy() && !Lift2.isBusy() && Rotation.getPosition()>rotPick-rotWait && Lift.getCurrentPosition()<500) {
-                    Rotation.setPosition(rotPick);
+            case 6:
+                if (!follower.isBusy()) {
+                    Rotation.setPosition(rotPick+rotDelta+0.01);
                     setPathState(13);
                 }
                 //sleep(5);
                 break;
             case 13:
-                if (pathTimer.getElapsedTimeSeconds()>grabDelay) {
+                if (pathTimer.getElapsedTimeSeconds()>1) {
                     Sample.setPosition(closeClaw);
                     setPathState(19);
                 }
@@ -212,16 +212,16 @@ public class LeagueSampleAuto extends OpMode {
                 condition = Wrist.getPosition()<wristScore+0.2;
                 if (pathTimer.getElapsedTimeSeconds()>scoreDelay) {
                     Sample.setPosition(openClaw);
-                    Rotation.setPosition(rotPick-rotDelta);
+                    Rotation.setPosition(rotPick+rotDelta);
                     Wrist.setPosition(wristPick);
                     comeBack();
                     follower.followPath(grabPickup2, true);
-                    setPathState(6);
+                    setPathState(68);
                 }
                 break;
-            case 6:
+            case 68:
                 if (!follower.isBusy() && !Lift.isBusy() && !Lift2.isBusy() && Rotation.getPosition()>rotPick-rotWait && Lift.getCurrentPosition()<500) {
-                    Rotation.setPosition(rotPick);
+                    Rotation.setPosition(rotPick+2*rotDelta);
                     setPathState(14);
                 }
                 //sleep(5);
@@ -244,17 +244,16 @@ public class LeagueSampleAuto extends OpMode {
                 condition = Wrist.getPosition()<wristScore+0.2;
                 if (pathTimer.getElapsedTimeSeconds()>scoreDelay) {
                     Sample.setPosition(openClaw);
-                    Rotation.setPosition(rotPick-rotDelta);
-                    Wrist.setPosition(wristPick);
                     comeBack();
                     follower.followPath(grabPickup3, true);
-                    swap.setPosition(0);
+                    swap.setPosition(0.7);
                     setPathState(9);
                 }
                 break;
             case 9:
-                if (!follower.isBusy() && !Lift.isBusy() && !Lift2.isBusy() && Rotation.getPosition()>rotPick-rotWait && Lift.getCurrentPosition()<500) {
-                    Rotation.setPosition(rotPick+0.02);
+                if (!follower.isBusy()) {
+                    Rotation.setPosition(rotPick+rotDelta);
+                    Wrist.setPosition(wristPick);
                     setPathState(15);
                 }
                 //sleep(5);
@@ -271,7 +270,7 @@ public class LeagueSampleAuto extends OpMode {
                 }
             case 10:
                 if (!follower.isBusy() && !Lift.isBusy() && !Lift2.isBusy() && Rotation.getPosition()<rotPos+rotWait && Lift.getCurrentPosition()>2500) {
-                    swap.setPosition(0.4);
+                    swap.setPosition(0.18);
                     Wrist.setPosition(wristScore);
                     setPathState(11);
                 }
@@ -347,7 +346,7 @@ public class LeagueSampleAuto extends OpMode {
         Rotation.setPosition(rotPos);
         Wrist.setPosition(wristPick);
         Sample.setPosition(closeClaw);
-        swap.setPosition(0.4);
+        swap.setPosition(0.18);
     }
 
     /** This method is called continuously after Init while waiting for "play". **/
@@ -384,7 +383,7 @@ public class LeagueSampleAuto extends OpMode {
     }
     public void comeBack() {
         Sample.setPosition(0.3);
-        Wrist.setPosition(1);
+        Wrist.setPosition(0);
         Lift.setTargetPosition(0);
         Lift.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         Lift.setPower(liftPow);
